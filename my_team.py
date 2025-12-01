@@ -253,12 +253,13 @@ class OffensiveMinimaxAgent(ReflexCaptureAgent):
         enemies = [successor.get_agent_state(i) for i in self.get_opponents(successor)]
         ghosts = [a for a in enemies if not a.is_pacman and a.get_position() is not None]
         
+        # Ghost avoidance applies when on enemy side (pacman), regardless of carrying food
         if len(ghosts) > 0 and my_state.is_pacman:
             ghost_distances = [self.get_maze_distance(my_pos, g.get_position()) for g in ghosts]
             min_ghost_dist = min(ghost_distances)
             
-            # Ghost danger increases priority to return home
-            if min_ghost_dist <= 1:
+            # Ghost danger - avoid them when exploring too
+            if min_ghost_dist <= 2:
                 features['ghost_nearby'] = 1
                 features['ghost_distance'] = min_ghost_dist
         
@@ -285,15 +286,15 @@ class OffensiveMinimaxAgent(ReflexCaptureAgent):
                 'reverse': -2                  # Very light penalty when escaping
             }
         else:
-            # Not carrying food - focus on collecting
+            # Not carrying food - focus on collecting but still avoid ghosts
             return {
                 'successor_score': 200,        # HIGH priority for eating food
                 'distance_to_food': -2,        # Strong incentive to approach food
                 'carrying_food': 0,
                 'returned_home': 0,
                 'x_position': 0,
-                'ghost_nearby': -500,
-                'ghost_distance': 5,
+                'ghost_nearby': -800,          # Increased penalty for being near ghosts
+                'ghost_distance': 10,          # Increased weight for distance
                 'reverse': -10                 # Moderate penalty to avoid oscillation
             }
     
@@ -539,9 +540,9 @@ class OffensiveMinimaxAgent(ReflexCaptureAgent):
                         elif current_score <= 0:
                             fear_distance = 1  # Very reckless - only avoid immediate contact
                         elif current_score == 1:
-                            fear_distance = 2
+                            fear_distance = 3  # More cautious when winning by 1
                         elif current_score == 2:
-                            fear_distance = 3
+                            fear_distance = 4
                         else:
                             fear_distance = 5  # Maximum caution when winning by 3+
                         
