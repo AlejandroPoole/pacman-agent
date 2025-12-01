@@ -738,16 +738,20 @@ class DefensiveMinimaxAgent(CaptureAgent):
                 invader_distances = [self.get_maze_distance(successor_pos, inv.get_position()) for inv in invaders]
                 min_invader_dist = min(invader_distances)
                 
-                # Prioritize catching invaders
-                score = -min_invader_dist * 1000
+                # VERY HIGH PRIORITY for catching invaders - increased from 1000 to 10000
+                score = -min_invader_dist * 10000
                 
-                # Bonus for staying on defense
+                # Strong bonus for staying on defense while chasing
                 if not successor_state.is_pacman:
-                    score += 100
+                    score += 500  # Increased from 100
                 
-                # Penalty for stopping
+                # Heavy penalty for stopping - must keep moving toward invader
                 if action == Directions.STOP:
-                    score -= 500
+                    score -= 5000  # Increased from 500
+                
+                # Bonus for being very close to invader (about to catch)
+                if min_invader_dist <= 1:
+                    score += 50000  # Huge bonus for being adjacent to invader
                 
                 values.append(score)
             
